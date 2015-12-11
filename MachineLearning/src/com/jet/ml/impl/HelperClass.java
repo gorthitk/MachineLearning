@@ -51,14 +51,18 @@ public class HelperClass {
 
            //Review Info
            if (user.getActual_review_count() !=0) {
-           oneLine.append(new DecimalFormat("#.##").format(user.getReview_star_count()/user.getActual_review_count()));
+           oneLine.append(user.getActual_review_count());
            oneLine.append(CSV_SEPARATOR);
-           oneLine.append(Math.round(user.getReview_useful()/user.getActual_review_count()));
+           oneLine.append(new DecimalFormat("#.##").format(user.getReview_star_count()/user.getActual_review_count()));
            oneLine.append(CSV_SEPARATOR);
            oneLine.append(Math.round(user.getReview_cool()/user.getActual_review_count()));
            oneLine.append(CSV_SEPARATOR);
            oneLine.append(Math.round(user.getReview_funny()/user.getActual_review_count()));
+           oneLine.append(CSV_SEPARATOR);
+           oneLine.append(Math.round(user.getReview_useful()/user.getActual_review_count()));
            } else {
+               oneLine.append(ZERO);
+               oneLine.append(CSV_SEPARATOR);
                oneLine.append(ZERO);
                oneLine.append(CSV_SEPARATOR);
                oneLine.append(ZERO);

@@ -43,7 +43,7 @@ public class YelpTrainingDataCreator {
      */
     public static void main(String[] args) throws Exception {
 
-        if (args == null) throw new Exception("Somebody gonna get hurt real bad !");
+        if (args == null) throw new Exception("I tried mending it with a Hammer !");
         DB db = MONGODB_CONNECTION_INTERFACE.connecttoDB();
         Map<String, DBCollection> collections = new HashMap<String, DBCollection>();
 
