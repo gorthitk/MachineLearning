@@ -16,7 +16,7 @@ public class UserInfo implements Serializable {
     private int funny_votes_user;
     private int useful_votes_user;
     private int cool_votes_user;
-    private int stars_user;
+    private double stars_user;
     private int friends_count;
     private int review_count_user;
     private int fans;
@@ -70,13 +70,13 @@ public class UserInfo implements Serializable {
     /**
      * @return the stars_user
      */
-    public int getStars_user() {
+    public double getStars_user() {
         return stars_user;
     }
     /**
      * @param stars_user the stars_user to set
      */
-    public void setStars_user(int stars_user) {
+    public void setStars_user(double stars_user) {
         this.stars_user = stars_user;
     }
     /**

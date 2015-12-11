@@ -11,7 +11,9 @@ import java.util.List;
 
 import com.jet.ml.model.BusinessInfo;
 import com.jet.ml.model.PredictionUserInfo;
+import com.jet.ml.model.Reviews;
 import com.jet.ml.model.SearchCriteria;
+import com.jet.ml.model.UserInfo;
 
 /**
  * Title: HelperClass.java<br>
@@ -26,6 +28,53 @@ public class HelperClass {
     private static final String FORMAT = ".csv";
     private static final int ZERO = 0; 
 
+    public void generateCSVdataForReviews(List<Reviews> reviews) throws Exception {
+     StringBuffer oneLine = new StringBuffer();
+      for (Reviews review : reviews) {
+         //Review Info
+          oneLine.append(review.getStars());
+          oneLine.append(CSV_SEPARATOR);
+          oneLine.append(review.getReviewLength());
+          oneLine.append(CSV_SEPARATOR);
+          oneLine.append(review.getCool_votes());
+          oneLine.append(CSV_SEPARATOR);
+          oneLine.append(review.getFunny_votes());
+          oneLine.append(CSV_SEPARATOR);
+          oneLine.append(review.getUseful_votes());
+          oneLine.append(CSV_SEPARATOR);
+          oneLine.append(review.isEliteYearReview() ? "1" : "0");
+          oneLine.append(CSV_SEPARATOR);
+
+          //User Info
+          UserInfo user = review.getUserInfo();
+
+          if (user == null) throw new Exception("You made a Boo Boo!");
+          oneLine.append(user.getStars_user());
+          oneLine.append(CSV_SEPARATOR);
+          oneLine.append(user.isEliteUser() ? "1" : "0");
+          oneLine.append(CSV_SEPARATOR);
+          if (user.getYearsOfElite() != null && !user.getYearsOfElite().isEmpty()) {
+             oneLine.append(user.getYearsOfElite().size());
+          }
+          oneLine.append(ZERO);
+          oneLine.append(CSV_SEPARATOR);
+          oneLine.append(user.getStars_user());
+          oneLine.append(CSV_SEPARATOR);
+          oneLine.append(user.getCool_votes_user());
+          oneLine.append(CSV_SEPARATOR);
+          oneLine.append(user.getFunny_votes_user());
+          oneLine.append(CSV_SEPARATOR);
+          oneLine.append(user.getUseful_votes_user());
+          oneLine.append(CSV_SEPARATOR);
+          oneLine.append(user.getFans());
+          oneLine.append(CSV_SEPARATOR);
+          oneLine.append(user.getFriends_count());
+
+          oneLine.append("\n");
+      }
+      writeToCSV(oneLine.toString(), "Reviews");
+      System.out.println("Generated the CSV data for Reviews");
+    }
     public void generateCSVdataForUsers(List<PredictionUserInfo> userInfoList) {
        StringBuffer oneLine = new StringBuffer();
        for (PredictionUserInfo user : userInfoList) {

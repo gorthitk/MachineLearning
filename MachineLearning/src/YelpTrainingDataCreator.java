@@ -43,7 +43,7 @@ public class YelpTrainingDataCreator {
      */
     public static void main(String[] args) throws Exception {
 
-        if (args == null) throw new Exception("I tried mending it with a Hammer !");
+        if (args == null) throw new Exception("Try mending it with a Hammer !");
         DB db = MONGODB_CONNECTION_INTERFACE.connecttoDB();
         Map<String, DBCollection> collections = new HashMap<String, DBCollection>();
 
@@ -54,14 +54,41 @@ public class YelpTrainingDataCreator {
 
         if (args[0].equals("1")) {
             populate_data_for_business(collections);
-        } else {
+        } else if (args[0].equals("2")) {
             populate_data_for_users(collections);
+        } else if (args[0].equals("3")){
+          populate_date_for_review(collections);
+        } else {
+           throw new Exception ("Go Home ! You're Drunk !");
         }
     }
 
+    public static void populate_date_for_review(Map<String, DBCollection> collections) throws Exception {
+       System.out.println("Populating data for Review Analysis!");
+       List<Reviews> reviews = MONGODB_CONNECTION_INTERFACE.getListOfReviews(collections.get(REVIEW_COLLECTION_NAME), null, false, 30000);
+       List<String> userIds = new ArrayList<String>();
+       for (Reviews review : reviews) {
+             userIds.add(review.getUserId());
+       }
+       Map<String, UserInfo> userMap = MONGODB_CONNECTION_INTERFACE.getUserInfo(collections.get(USER_COLLECTION_NAME), true, userIds);
+       for (Reviews review : reviews) {
+         UserInfo user = userMap.get(review.getUserId());
+         review.setUserInfo(user);
+         String review_year = String.valueOf(review.getReview_year());
+
+         if (user.getYearsOfElite() != null && !user.getYearsOfElite().isEmpty()) {
+             if(user.getYearsOfElite().contains(review_year)) {
+                 review.setEliteYearReview(true);
+             } 
+         }
+       }
+
+       System.out.println("Generating the CSV for Reviews data !");
+       HELPER.generateCSVdataForReviews(reviews);
+    }
     public static void populate_data_for_users(Map<String, DBCollection> collections) throws ParseException {
       System.out.println("Populating User Info");
-      Map<String, UserInfo> userMap = MONGODB_CONNECTION_INTERFACE.getUserInfo(collections.get(USER_COLLECTION_NAME), true);
+      Map<String, UserInfo> userMap = MONGODB_CONNECTION_INTERFACE.getUserInfo(collections.get(USER_COLLECTION_NAME), true, null);
       List<String> userIds = new ArrayList<String>();
       userIds.addAll(userMap.keySet());
       List<Reviews> reviews = MONGODB_CONNECTION_INTERFACE.getListOfReviewsForUserId(collections.get(REVIEW_COLLECTION_NAME), userIds);
@@ -121,7 +148,7 @@ public class YelpTrainingDataCreator {
                    predUserInfo.setReview_cool(predUserInfo.getReview_cool() + review.getCool_votes());
                    predUserInfo.setReview_funny(predUserInfo.getReview_funny() + review.getFunny_votes());
                    predUserInfo.setReview_useful(predUserInfo.getReview_useful() + review.getUseful_votes());
-                   predUserInfo.setStars(predUserInfo.getReview_star_count() + review.getStars());
+                   predUserInfo.setReview_star_count(predUserInfo.getReview_star_count() + review.getStars());
                    predUserInfo.setActual_review_count(predUserInfo.getActual_review_count() + 1);
                    map.put(year, predUserInfo);
                    mostComplicatedUserMap.put(review.getUserId(), map);
@@ -171,7 +198,7 @@ public class YelpTrainingDataCreator {
             }
             MONGODB_CONNECTION_INTERFACE.getCheckInInformation(collections.get(CHECKIN_COLLECTION_NAME), businessInfoMap);
 
-            List<Reviews> reviews = MONGODB_CONNECTION_INTERFACE.getListOfReviewsForBusinessId(collections.get(REVIEW_COLLECTION_NAME), businessInfoMap);
+            List<Reviews> reviews = MONGODB_CONNECTION_INTERFACE.getListOfReviews(collections.get(REVIEW_COLLECTION_NAME), businessInfoMap, true, 0);
 
             Map<String, UserInfo> users = new HashMap<String, UserInfo>();
             if (reviews != null && !reviews.isEmpty()) {

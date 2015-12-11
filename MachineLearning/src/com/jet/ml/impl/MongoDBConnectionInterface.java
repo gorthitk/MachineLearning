@@ -107,20 +107,26 @@ import com.mongodb.DBCursor;
 
   /**
   * @param reviewBusinessMap 
- * @param numberOfReviews
+  * @param numberOfReviews
   * @return
-  * @throws ParseException 
+  * @throws Exception 
   */
-  public List<Reviews> getListOfReviewsForBusinessId(DBCollection collection, Map<String, BusinessInfo> businessInfoMap) throws ParseException {
+  public List<Reviews> getListOfReviews (DBCollection collection, Map<String, BusinessInfo> businessInfoMap, boolean forBusiness, int number_of_reviews) throws Exception {
 
+    DBCursor cursor = null;
     List<String> businessIds = new ArrayList<String>();
-    for (BusinessInfo business : businessInfoMap.values()) {
-         businessIds.add(business.getBusinessId());
-    }
+    if (forBusiness) {
+        if (businessInfoMap == null || businessInfoMap.isEmpty()) throw new Exception("Ok I Messed Up!");
+        for (BusinessInfo business : businessInfoMap.values()) {
+            businessIds.add(business.getBusinessId());
+       }
 
-    BasicDBObject whereQuery = new BasicDBObject();
-    whereQuery.put("business_id", new BasicDBObject("$in",businessIds));
-    DBCursor cursor = collection.find(whereQuery);
+        BasicDBObject whereQuery = new BasicDBObject();
+        whereQuery.put("business_id", new BasicDBObject("$in",businessIds));
+        cursor = collection.find(whereQuery);
+    } else {
+       cursor = collection.find().limit(number_of_reviews);
+    }
 
     List<Reviews> list = new ArrayList<Reviews>();
     while (cursor.hasNext()) {
@@ -143,6 +149,10 @@ import com.mongodb.DBCursor;
      Date convertedReviewDate = sdf.parse(reviewInfo.getString("date"));
      review.setReview_date(convertedReviewDate);
 
+     Calendar calendar = new GregorianCalendar();
+     calendar.setTime(convertedReviewDate);
+
+     review.setReview_year(calendar.get(Calendar.YEAR));
      if (reviewInfo.getString("text") != null && !reviewInfo.getString("text").isEmpty()) {
            review.setReviewLength(reviewInfo.getString("text").length());
      }
@@ -213,7 +223,7 @@ import com.mongodb.DBCursor;
 
           user.setYelp_user_name(userInfo.getString("name"));
           user.setReview_count_user(userInfo.getInt("review_count"));
-          user.setStars_user(userInfo.getInt("average_stars"));
+          user.setStars_user(userInfo.getDouble("average_stars"));
           user.setFans(userInfo.getInt("fans"));
 
           BasicDBObject votesInfo = (BasicDBObject) userInfo.get("votes");
@@ -240,7 +250,7 @@ import com.mongodb.DBCursor;
         return users;
       }
 
-   public Map<String, UserInfo> getUserInfo(DBCollection collection, boolean include_nonElite) throws ParseException {
+   public Map<String, UserInfo> getUserInfo(DBCollection collection, boolean include_nonElite, List<String> userIds) throws ParseException {
      Map<String, UserInfo> userMap = new HashMap<String, UserInfo>();
      DBCursor cursor = null;
 
@@ -250,7 +260,9 @@ import com.mongodb.DBCursor;
          whereQuery.put("elite", new BasicDBObject("$not", new BasicDBObject("$size", 0)));
          cursor = collection.find(whereQuery);
      } else {
-         cursor = collection.find();
+         BasicDBObject whereQuery = new BasicDBObject();
+         whereQuery.put("user_id", new BasicDBObject("$in",userIds));
+         cursor = collection.find(whereQuery);
      }
 
      while(cursor.hasNext()) {
@@ -302,7 +314,7 @@ import com.mongodb.DBCursor;
               }
          userMap.put(user.getUserId(), user);
          }
-     System.out.println("Number of Users on the Database : " + userMap.size());
+     System.out.println("Number of Users fetched from the Database : " + userMap.size());
      return userMap;
      }
 
