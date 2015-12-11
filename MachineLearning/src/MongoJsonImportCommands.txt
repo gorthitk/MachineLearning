@@ -1,0 +1,26 @@
+--Create Database
+use yelp
+
+---Few Useful Commands
+> show dbs
+local  0.078GB
+yelp   0.953GB
+
+> db
+yelp
+
+>db.businessInfo.find({"state": "PA"})
+
+>db.businessInfo.find({"state": "PA"}).count()
+
+>db.businessInfo.distinct("state")
+
+>db.businessInfo.find({"full_address": {$regex:/MA/}}).count()
+
+>db.users.find({elite:{$not : {$size:0}}})
+--Run from the same directory where the Json files are residing.
+
+mongoimport --db yelp --collection reviews <yelp_academic_dataset_review.json
+mongoimport --db yelp --collection users <yelp_academic_dataset_user.json
+mongoimport --db yelp --collection checkinInfo <yelp_academic_dataset_checkin.json
+mongoimport --db yelp --collection businessInfo <yelp_academic_dataset_business.json
