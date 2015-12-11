@@ -48,5 +48,11 @@ public class DataHelper {
        sc.setState("WI");
        sc.addLocation(new Location(43.0826,-89.4170)); //University of Wisconsin - Madison
        criteria.add(sc);
+
+       //State of Illinois (University of Illinois - Urbana-Champaign)
+       sc = new SearchCriteria();
+       sc.setState("IL");
+       sc.addLocation(new Location(40.1105, -88.2284)); //University of Illinois - Urbana-Champaign
+       criteria.add(sc);
     }
 }

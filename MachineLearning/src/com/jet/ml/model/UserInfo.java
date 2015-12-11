@@ -1,5 +1,6 @@
 package com.jet.ml.model;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -22,6 +23,7 @@ public class UserInfo implements Serializable {
     private String yelp_user_name;
     private String userId;
     private boolean eliteUser;
+    private Date yelping_since;
  
     //temp variables
     private List<String> yearsOfElite;
@@ -176,4 +178,16 @@ public class UserInfo implements Serializable {
         this.number_of_months_yelping = number_of_months_yelping;
     }
 
+    /**
+     * @return the yelping_since
+     */
+    public Date getYelping_since() {
+        return yelping_since;
+    }
+    /**
+     * @param yelping_since the yelping_since to set
+     */
+    public void setYelping_since(Date yelping_since) {
+        this.yelping_since = yelping_since;
+    }
 }

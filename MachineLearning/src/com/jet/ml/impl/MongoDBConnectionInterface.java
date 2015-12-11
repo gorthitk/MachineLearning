@@ -1,5 +1,5 @@
-  package com.jet.ml.impl;
-  import com.mongodb.MongoClient;
+package com.jet.ml.impl;
+import com.mongodb.MongoClient;
 
 import java.net.UnknownHostException;
 import java.text.ParseException;
@@ -14,13 +14,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.jet.ml.model.BusinessInfo;
-  import com.jet.ml.model.Reviews;
+import com.jet.ml.model.Reviews;
 import com.jet.ml.model.UserInfo;
 import com.mongodb.BasicDBList;
-  import com.mongodb.BasicDBObject;
-  import com.mongodb.DB;
-  import com.mongodb.DBCollection;
-  import com.mongodb.DBCursor;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
 
   /**
    * Title: MongoDBConnectionInterface.java<br>
@@ -128,14 +128,13 @@ import com.mongodb.BasicDBList;
      BasicDBObject reviewInfo = (BasicDBObject) cursor.next();
      BasicDBObject votesInfo = (BasicDBObject) reviewInfo.get("votes");
 
-     if (votesInfo.getInt("useful") != 0) {
      Reviews review = new Reviews();
 
      review.setReviewId(reviewInfo.getString("review_id"));
      review.setUserId(reviewInfo.getString("user_id"));
      review.setBusinessId(reviewInfo.getString("business_id"));
 
-     review.setStars(reviewInfo.getDouble("stars"));
+     review.setStars(reviewInfo.getInt("stars"));
      review.setCool_votes(votesInfo.getInt("cool"));
      review.setFunny_votes(votesInfo.getInt("funny"));
      review.setUseful_votes(votesInfo.getInt("useful"));
@@ -149,7 +148,6 @@ import com.mongodb.BasicDBList;
      }
 
      list.add(review);
-     }
   }
     System.out.println("Number of Reviews found : "+ list.size());
     return list;
@@ -242,33 +240,47 @@ import com.mongodb.BasicDBList;
         return users;
       }
 
-   public void getUserInfo(DBCollection collection) throws ParseException {
-     BasicDBObject whereQuery = new BasicDBObject();
-     whereQuery.put("elite", new BasicDBObject("$not", new BasicDBObject("$size", 0)));
-     //int count = collection.find(whereQuery).count();
-     DBCursor cursor = collection.find(whereQuery);
+   public Map<String, UserInfo> getUserInfo(DBCollection collection, boolean include_nonElite) throws ParseException {
+     Map<String, UserInfo> userMap = new HashMap<String, UserInfo>();
+     DBCursor cursor = null;
+
+     if (!include_nonElite) {
+         BasicDBObject whereQuery = new BasicDBObject();
+         //Used when we only need information about users who are elite
+         whereQuery.put("elite", new BasicDBObject("$not", new BasicDBObject("$size", 0)));
+         cursor = collection.find(whereQuery);
+     } else {
+         cursor = collection.find();
+     }
+
      while(cursor.hasNext()) {
          BasicDBObject userInfo = (BasicDBObject) cursor.next();
-         UserInfo user = new UserInfo();
-         user.setUserId(userInfo.getString("user_id"));
+         BasicDBObject votesInfo = (BasicDBObject) userInfo.get("votes");
+         BasicDBList eliteYears = (BasicDBList) userInfo.get("elite");
+         BasicDBList friendsList = (BasicDBList) userInfo.get("friends");
 
+         UserInfo user = new UserInfo();
+
+         user.setUserId(userInfo.getString("user_id"));
          user.setYelp_user_name(userInfo.getString("name"));
          user.setReview_count_user(userInfo.getInt("review_count"));
          user.setStars_user(userInfo.getInt("average_stars"));
-         user.setFans(userInfo.getInt("fans"));
 
-         BasicDBObject votesInfo = (BasicDBObject) userInfo.get("votes");
+
+
          user.setCool_votes_user(votesInfo.getInt("cool"));
          user.setFunny_votes_user(votesInfo.getInt("funny"));
          user.setUseful_votes_user(votesInfo.getInt("useful"));
 
-         BasicDBList friendsList = (BasicDBList) userInfo.get("friends");
+         user.setFans(userInfo.getInt("fans"));
          user.setFriends_count(friendsList.size());
 
          String yelping_since = userInfo.getString("yelping_since") + "-01";
          SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
          Date convertedYelpingSinceDate = sdf.parse(yelping_since);
+
          Date currentDate = new Date();
+ 
          Calendar startCalendar = new GregorianCalendar();
          startCalendar.setTime(convertedYelpingSinceDate);
          Calendar endCalendar = new GregorianCalendar();
@@ -278,8 +290,8 @@ import com.mongodb.BasicDBList;
          int diffMonth = diffYear * 12 + endCalendar.get(Calendar.MONTH) - startCalendar.get(Calendar.MONTH);
 
          user.setNumber_of_months_yelping(diffMonth);
+         user.setYelping_since(convertedYelpingSinceDate);
 
-         BasicDBList eliteYears = (BasicDBList) userInfo.get("elite");
          if (eliteYears != null && !eliteYears.isEmpty()) {
             user.setEliteUser(true);
 
@@ -288,8 +300,59 @@ import com.mongodb.BasicDBList;
                    user.getYearsOfElite().add(Integer.toString((int)eliteYears.get(i)));
                  }
               }
+         userMap.put(user.getUserId(), user);
          }
+     System.out.println("Number of Users on the Database : " + userMap.size());
+     return userMap;
      }
 
+   /**
+    * @param reviewBusinessMap 
+   * @param numberOfReviews
+    * @return
+    * @throws ParseException 
+    */
+    public List<Reviews> getListOfReviewsForUserId(DBCollection collection, List<String> userIds) throws ParseException {
+
+      BasicDBObject whereQuery = new BasicDBObject();
+      whereQuery.put("user_id", new BasicDBObject("$in",userIds));
+      DBCursor cursor = collection.find(whereQuery);
+
+      List<Reviews> list = new ArrayList<Reviews>();
+      while (cursor.hasNext()) {
+
+       BasicDBObject reviewInfo = (BasicDBObject) cursor.next();
+       BasicDBObject votesInfo = (BasicDBObject) reviewInfo.get("votes");
+
+       Reviews review = new Reviews();
+
+       review.setReviewId(reviewInfo.getString("review_id"));
+       review.setUserId(reviewInfo.getString("user_id"));
+       review.setBusinessId(reviewInfo.getString("business_id"));
+
+       review.setStars(reviewInfo.getDouble("stars"));
+       review.setCool_votes(votesInfo.getInt("cool"));
+       review.setFunny_votes(votesInfo.getInt("funny"));
+       review.setUseful_votes(votesInfo.getInt("useful"));
+
+       SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+       Date convertedReviewDate = sdf.parse(reviewInfo.getString("date"));
+       review.setReview_date(convertedReviewDate);
+
+       Calendar calendar = new GregorianCalendar();
+       calendar.setTime(convertedReviewDate);
+
+       review.setReview_year(calendar.get(Calendar.YEAR));
+
+       if (reviewInfo.getString("text") != null && !reviewInfo.getString("text").isEmpty()) {
+             review.setReviewLength(reviewInfo.getString("text").length());
+       }
+
+       list.add(review);
+
+    }
+      System.out.println("Number of Reviews found : "+ list.size());
+      return list;
+     }
 //End of Class
 }

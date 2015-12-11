@@ -28,6 +28,7 @@ public class Reviews implements Serializable{
 
     private UserInfo userInfo;
     private boolean eliteYearReview;
+    private long review_year;
 
     /**
      * @return the userId
@@ -164,5 +165,18 @@ public class Reviews implements Serializable{
      */
     public void setEliteYearReview(boolean eliteYearReview) {
         this.eliteYearReview = eliteYearReview;
+    }
+
+    /**
+     * @return the review_year
+     */
+    public long getReview_year() {
+        return review_year;
+    }
+    /**
+     * @param review_year the review_year to set
+     */
+    public void setReview_year(long review_year) {
+        this.review_year = review_year;
     }
 }

@@ -15,7 +15,7 @@ yelp
 
 >db.businessInfo.distinct("state")
 
->db.businessInfo.find({"full_address": {$regex:/MA/}}).count()
+>db.businessInfo.find({"full_address": {$regex:/California/}}).count()
 
 >db.users.find({elite:{$not : {$size:0}}})
 --Run from the same directory where the Json files are residing.

@@ -10,6 +10,7 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 import com.jet.ml.model.BusinessInfo;
+import com.jet.ml.model.PredictionUserInfo;
 import com.jet.ml.model.SearchCriteria;
 
 /**
@@ -25,6 +26,53 @@ public class HelperClass {
     private static final String FORMAT = ".csv";
     private static final int ZERO = 0; 
 
+    public void generateCSVdataForUsers(List<PredictionUserInfo> userInfoList) {
+       StringBuffer oneLine = new StringBuffer();
+       for (PredictionUserInfo user : userInfoList) {
+           //User Info
+           oneLine.append(user.isEliteUser() ? "1" : "0");
+           oneLine.append(CSV_SEPARATOR);
+           oneLine.append(user.getStars());
+           oneLine.append(CSV_SEPARATOR);
+           oneLine.append(user.getFans());
+           oneLine.append(CSV_SEPARATOR);
+           oneLine.append(user.getFriends());
+           oneLine.append(CSV_SEPARATOR);
+           oneLine.append(user.getCool());
+           oneLine.append(CSV_SEPARATOR);
+           oneLine.append(user.getFunny());
+           oneLine.append(CSV_SEPARATOR);
+           oneLine.append(user.getUseful());
+           oneLine.append(CSV_SEPARATOR);
+           oneLine.append(user.getMonths_yelping());
+           oneLine.append(CSV_SEPARATOR);
+           oneLine.append(user.getEarlier_years_elite_membership());
+           oneLine.append(CSV_SEPARATOR);
+
+           //Review Info
+           if (user.getActual_review_count() !=0) {
+           oneLine.append(new DecimalFormat("#.##").format(user.getReview_star_count()/user.getActual_review_count()));
+           oneLine.append(CSV_SEPARATOR);
+           oneLine.append(Math.round(user.getReview_useful()/user.getActual_review_count()));
+           oneLine.append(CSV_SEPARATOR);
+           oneLine.append(Math.round(user.getReview_cool()/user.getActual_review_count()));
+           oneLine.append(CSV_SEPARATOR);
+           oneLine.append(Math.round(user.getReview_funny()/user.getActual_review_count()));
+           } else {
+               oneLine.append(ZERO);
+               oneLine.append(CSV_SEPARATOR);
+               oneLine.append(ZERO);
+               oneLine.append(CSV_SEPARATOR);
+               oneLine.append(ZERO);
+               oneLine.append(CSV_SEPARATOR);
+               oneLine.append(ZERO);
+           }
+           oneLine.append("\n");
+       }
+       writeToCSV(oneLine.toString(), "Users");
+       System.out.println("Generated a CSV with all user info");
+       System.out.println("------------------------------------------------------------------------------------");
+    }
     public void generateCSVdataForBusiness(List<BusinessInfo> businessess, SearchCriteria criteria) {
         StringBuffer oneLine = new StringBuffer();
         for (BusinessInfo business : businessess)

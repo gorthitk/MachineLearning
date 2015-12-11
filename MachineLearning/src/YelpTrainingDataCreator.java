@@ -1,4 +1,6 @@
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -11,6 +13,7 @@ import com.jet.ml.impl.HelperClass;
 import com.jet.ml.impl.MongoDBConnectionInterface;
 import com.jet.ml.model.BusinessInfo;
 import com.jet.ml.model.Location;
+import com.jet.ml.model.PredictionUserInfo;
 import com.jet.ml.model.Reviews;
 import com.jet.ml.model.SearchCriteria;
 import com.jet.ml.model.UserInfo;
@@ -40,6 +43,7 @@ public class YelpTrainingDataCreator {
      */
     public static void main(String[] args) throws Exception {
 
+        if (args == null) throw new Exception("Somebody gonna get hurt real bad !");
         DB db = MONGODB_CONNECTION_INTERFACE.connecttoDB();
         Map<String, DBCollection> collections = new HashMap<String, DBCollection>();
 
@@ -48,7 +52,91 @@ public class YelpTrainingDataCreator {
         collections.put(USER_COLLECTION_NAME, MONGODB_CONNECTION_INTERFACE.getCollection(USER_COLLECTION_NAME, db));
         collections.put(CHECKIN_COLLECTION_NAME, MONGODB_CONNECTION_INTERFACE.getCollection(CHECKIN_COLLECTION_NAME, db));
 
-        populate_data_for_business(collections);
+        if (args[0].equals("1")) {
+            populate_data_for_business(collections);
+        } else {
+            populate_data_for_users(collections);
+        }
+    }
+
+    public static void populate_data_for_users(Map<String, DBCollection> collections) throws ParseException {
+      System.out.println("Populating User Info");
+      Map<String, UserInfo> userMap = MONGODB_CONNECTION_INTERFACE.getUserInfo(collections.get(USER_COLLECTION_NAME), true);
+      List<String> userIds = new ArrayList<String>();
+      userIds.addAll(userMap.keySet());
+      List<Reviews> reviews = MONGODB_CONNECTION_INTERFACE.getListOfReviewsForUserId(collections.get(REVIEW_COLLECTION_NAME), userIds);
+
+      Map<String, Map<String, PredictionUserInfo>> mostComplicatedUserMap = new HashMap<String, Map<String, PredictionUserInfo>>();
+
+      //Populating User Info against each Elite Year
+      System.out.println("Populating User Info against each elite year");
+      for (String userId : userIds) {
+          UserInfo user = userMap.get(userId);
+          if (user.getYearsOfElite() != null && !user.getYearsOfElite().isEmpty()) {
+              for (String year : user.getYearsOfElite()) {
+                  PredictionUserInfo predUserInfo = new PredictionUserInfo(user.getUserId(), user.getStars_user(), user.getCool_votes_user(), user.getFunny_votes_user(), 
+                      user.getUseful_votes_user(), user.getFriends_count(), user.getFans());
+                  predUserInfo.setEliteUser(true);
+
+                  Calendar startCalendar = new GregorianCalendar();
+                  startCalendar.setTime(user.getYelping_since());
+
+                  Calendar endCalendar = new GregorianCalendar();
+                  endCalendar.set(Integer.parseInt(year), 01, 01);
+
+                  int diffYear = endCalendar.get(Calendar.YEAR) - startCalendar.get(Calendar.YEAR);
+                  int diffMonth = diffYear * 12 + endCalendar.get(Calendar.MONTH) - startCalendar.get(Calendar.MONTH);
+
+                  predUserInfo.setMonths_yelping(diffMonth);
+                  predUserInfo.setEarlier_years_elite_membership(user.getYearsOfElite().size());
+
+                  if (mostComplicatedUserMap.get(userId) == null) {
+                      Map<String, PredictionUserInfo> map = new HashMap<String, PredictionUserInfo>();
+                      mostComplicatedUserMap.put(userId, map);
+                  }
+
+                      mostComplicatedUserMap.get(userId).put(year, predUserInfo);
+                } 
+          } else {
+              PredictionUserInfo predUserInfo = new PredictionUserInfo(user.getUserId(), user.getStars_user(), user.getCool_votes_user(), user.getFunny_votes_user(), 
+                      user.getUseful_votes_user(), user.getFriends_count(), user.getFans());
+                  predUserInfo.setEliteUser(false); 
+
+                  Calendar cal = new GregorianCalendar();
+                  cal.setTime(new Date());
+                  predUserInfo.setMonths_yelping(user.getNumber_of_months_yelping() - cal.get(Calendar.MONTH));
+                  Map<String, PredictionUserInfo> map = new HashMap<String, PredictionUserInfo>();
+                  map.put(Integer.toString(cal.get(Calendar.YEAR)), predUserInfo);
+                  mostComplicatedUserMap.put(userId, map);
+          }
+      } //End of Part 1
+
+      for (Reviews review : reviews) {
+          Calendar reviewDate = new GregorianCalendar();
+          reviewDate.setTime(review.getReview_date());
+          Map<String, PredictionUserInfo> map = mostComplicatedUserMap.get(review.getUserId());
+          for(String year : map.keySet()) {
+             if (Integer.parseInt(year) > reviewDate.get(Calendar.YEAR)) {
+                   PredictionUserInfo predUserInfo = map.get(year);
+                   predUserInfo.setReview_cool(predUserInfo.getReview_cool() + review.getCool_votes());
+                   predUserInfo.setReview_funny(predUserInfo.getReview_funny() + review.getFunny_votes());
+                   predUserInfo.setReview_useful(predUserInfo.getReview_useful() + review.getUseful_votes());
+                   predUserInfo.setStars(predUserInfo.getReview_star_count() + review.getStars());
+                   predUserInfo.setActual_review_count(predUserInfo.getActual_review_count() + 1);
+                   map.put(year, predUserInfo);
+                   mostComplicatedUserMap.put(review.getUserId(), map);
+             }
+          }
+      }
+
+      List<PredictionUserInfo> finalUserInfoList = new ArrayList<PredictionUserInfo>();
+      for (String userId : mostComplicatedUserMap.keySet()) {
+         for (String year : mostComplicatedUserMap.get(userId).keySet()) {
+               finalUserInfoList.add(mostComplicatedUserMap.get(userId).get(year));
+         }
+      }
+      System.out.println("Total Number of Distinct elite user profiles : " + finalUserInfoList.size());
+      HELPER.generateCSVdataForUsers(finalUserInfoList);
     }
 
    public static void populate_data_for_business(Map<String, DBCollection> collections) throws Exception {
