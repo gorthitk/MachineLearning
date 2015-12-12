@@ -32,43 +32,44 @@ public class HelperClass {
      StringBuffer oneLine = new StringBuffer();
       for (Reviews review : reviews) {
          //Review Info
-          oneLine.append(review.getStars());
+          oneLine.append(review.getStars());//1
           oneLine.append(CSV_SEPARATOR);
-          oneLine.append(review.getReviewLength());
+          oneLine.append(review.getReviewLength());//2
           oneLine.append(CSV_SEPARATOR);
-          oneLine.append(review.getCool_votes());
+          oneLine.append(review.getCool_votes());//3
           oneLine.append(CSV_SEPARATOR);
-          oneLine.append(review.getFunny_votes());
+          oneLine.append(review.getFunny_votes());//4
           oneLine.append(CSV_SEPARATOR);
-          oneLine.append(review.getUseful_votes());
+          oneLine.append(review.getUseful_votes());//5
           oneLine.append(CSV_SEPARATOR);
-          oneLine.append(review.isEliteYearReview() ? "1" : "0");
+          oneLine.append(review.isEliteYearReview() ? "1" : "0");//6
           oneLine.append(CSV_SEPARATOR);
 
           //User Info
           UserInfo user = review.getUserInfo();
-
           if (user == null) throw new Exception("You made a Boo Boo!");
-          oneLine.append(user.getStars_user());
+
+          oneLine.append(user.isEliteUser() ? "1" : "0");//7
           oneLine.append(CSV_SEPARATOR);
-          oneLine.append(user.isEliteUser() ? "1" : "0");
-          oneLine.append(CSV_SEPARATOR);
+
           if (user.getYearsOfElite() != null && !user.getYearsOfElite().isEmpty()) {
-             oneLine.append(user.getYearsOfElite().size());
+             oneLine.append(user.getYearsOfElite().size());//8
+          } else {
+               oneLine.append(ZERO);
           }
-          oneLine.append(ZERO);
           oneLine.append(CSV_SEPARATOR);
-          oneLine.append(user.getStars_user());
+
+          oneLine.append(user.getStars_user());//9
           oneLine.append(CSV_SEPARATOR);
-          oneLine.append(user.getCool_votes_user());
+          oneLine.append(user.getCool_votes_user());//10
           oneLine.append(CSV_SEPARATOR);
-          oneLine.append(user.getFunny_votes_user());
+          oneLine.append(user.getFunny_votes_user());//11
           oneLine.append(CSV_SEPARATOR);
-          oneLine.append(user.getUseful_votes_user());
+          oneLine.append(user.getUseful_votes_user());//12
           oneLine.append(CSV_SEPARATOR);
-          oneLine.append(user.getFans());
+          oneLine.append(user.getFans());//13
           oneLine.append(CSV_SEPARATOR);
-          oneLine.append(user.getFriends_count());
+          oneLine.append(user.getFriends_count());//14
 
           oneLine.append("\n");
       }
